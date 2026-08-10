@@ -1,0 +1,347 @@
+import { User, Employee, AttendanceRecord, SavedReport, LeaveRequest } from '../types';
+
+export const INITIAL_USERS: User[] = [
+  {
+    id: 'u1',
+    email: 'admin@system.com',
+    name: 'Sarah Connor (Admin)',
+    role: 'Admin',
+    department: 'Management',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    createdAt: '2025-01-10',
+  },
+  {
+    id: 'u2',
+    email: 'teacher@system.com',
+    name: 'Prof. Michael Scott (HR/Teacher)',
+    role: 'Teacher/HR',
+    department: 'Human Resources',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    createdAt: '2025-01-15',
+  },
+  {
+    id: 'u3',
+    email: 'john@system.com',
+    name: 'John Doe (Employee)',
+    role: 'Student/Employee',
+    department: 'Engineering',
+    employeeId: 'E001',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    createdAt: '2025-02-01',
+  },
+];
+
+export const INITIAL_EMPLOYEES: Employee[] = [
+  {
+    id: 'E001',
+    name: 'John Doe',
+    email: 'john.doe@company.com',
+    type: 'Employee',
+    department: 'Engineering',
+    designation: 'Senior Software Engineer',
+    joinDate: '2023-03-15',
+    phone: '+1 (555) 019-2834',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'E002',
+    name: 'Alice Smith',
+    email: 'alice.smith@company.com',
+    type: 'Employee',
+    department: 'Engineering',
+    designation: 'Frontend Lead',
+    joinDate: '2023-06-01',
+    phone: '+1 (555) 018-9921',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'E003',
+    name: 'Bob Johnson',
+    email: 'bob.johnson@company.com',
+    type: 'Employee',
+    department: 'Human Resources',
+    designation: 'HR Specialist',
+    joinDate: '2022-11-10',
+    phone: '+1 (555) 014-5532',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'E004',
+    name: 'Eva Martinez',
+    email: 'eva.martinez@company.com',
+    type: 'Employee',
+    department: 'Marketing',
+    designation: 'Marketing Executive',
+    joinDate: '2024-01-20',
+    phone: '+1 (555) 012-8839',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'E005',
+    name: 'David Chen',
+    email: 'david.chen@company.com',
+    type: 'Employee',
+    department: 'Finance',
+    designation: 'Financial Analyst',
+    joinDate: '2023-09-01',
+    phone: '+1 (555) 017-4482',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'S101',
+    name: 'Clara Oswald',
+    email: 'clara.oswald@university.edu',
+    type: 'Student',
+    department: 'Computer Science Dept',
+    designation: 'CS Undergrad (B.Tech)',
+    joinDate: '2024-08-15',
+    phone: '+1 (555) 011-3329',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'S102',
+    name: 'Ethan Hunt',
+    email: 'ethan.hunt@university.edu',
+    type: 'Student',
+    department: 'Computer Science Dept',
+    designation: 'CS Undergrad (B.Tech)',
+    joinDate: '2024-08-15',
+    phone: '+1 (555) 016-7781',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'S103',
+    name: 'Fiona Gallagher',
+    email: 'fiona.g@university.edu',
+    type: 'Student',
+    department: 'Mathematics Dept',
+    designation: 'Math Student',
+    joinDate: '2024-08-15',
+    phone: '+1 (555) 013-6622',
+    status: 'Active',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+  },
+];
+
+// Seed exact example matching the handwritten notebook:
+// Date: 20-05-2025 (2025-05-20)
+// E001 John Present
+// E002 Alice Absent
+// E003 Bob Present
+// E004 Eva Leave
+export const INITIAL_ATTENDANCE: AttendanceRecord[] = [
+  // 2025-05-20 (Notebook Example Date)
+  {
+    id: 'att-20250520-E001',
+    date: '2025-05-20',
+    employeeId: 'E001',
+    employeeName: 'John Doe',
+    department: 'Engineering',
+    status: 'Present',
+    checkInTime: '09:02 AM',
+    notes: 'On time',
+  },
+  {
+    id: 'att-20250520-E002',
+    date: '2025-05-20',
+    employeeId: 'E002',
+    employeeName: 'Alice Smith',
+    department: 'Engineering',
+    status: 'Absent',
+    notes: 'Unexcused',
+  },
+  {
+    id: 'att-20250520-E003',
+    date: '2025-05-20',
+    employeeId: 'E003',
+    employeeName: 'Bob Johnson',
+    department: 'Human Resources',
+    status: 'Present',
+    checkInTime: '08:55 AM',
+    notes: 'Early check-in',
+  },
+  {
+    id: 'att-20250520-E004',
+    date: '2025-05-20',
+    employeeId: 'E004',
+    employeeName: 'Eva Martinez',
+    department: 'Marketing',
+    status: 'Leave',
+    notes: 'Approved medical leave',
+  },
+  {
+    id: 'att-20250520-E005',
+    date: '2025-05-20',
+    employeeId: 'E005',
+    employeeName: 'David Chen',
+    department: 'Finance',
+    status: 'Late',
+    checkInTime: '10:15 AM',
+    notes: 'Traffic delay',
+  },
+  {
+    id: 'att-20250520-S101',
+    date: '2025-05-20',
+    employeeId: 'S101',
+    employeeName: 'Clara Oswald',
+    department: 'Computer Science Dept',
+    status: 'Present',
+    checkInTime: '09:00 AM',
+  },
+  {
+    id: 'att-20250520-S102',
+    date: '2025-05-20',
+    employeeId: 'S102',
+    employeeName: 'Ethan Hunt',
+    department: 'Computer Science Dept',
+    status: 'Present',
+    checkInTime: '09:05 AM',
+  },
+  {
+    id: 'att-20250520-S103',
+    date: '2025-05-20',
+    employeeId: 'S103',
+    employeeName: 'Fiona Gallagher',
+    department: 'Mathematics Dept',
+    status: 'Present',
+    checkInTime: '08:50 AM',
+  },
+
+  // 2025-05-19
+  {
+    id: 'att-20250519-E001',
+    date: '2025-05-19',
+    employeeId: 'E001',
+    employeeName: 'John Doe',
+    department: 'Engineering',
+    status: 'Present',
+    checkInTime: '08:58 AM',
+  },
+  {
+    id: 'att-20250519-E002',
+    date: '2025-05-19',
+    employeeId: 'E002',
+    employeeName: 'Alice Smith',
+    department: 'Engineering',
+    status: 'Present',
+    checkInTime: '09:10 AM',
+  },
+  {
+    id: 'att-20250519-E003',
+    date: '2025-05-19',
+    employeeId: 'E003',
+    employeeName: 'Bob Johnson',
+    department: 'Human Resources',
+    status: 'Present',
+    checkInTime: '09:00 AM',
+  },
+  {
+    id: 'att-20250519-E004',
+    date: '2025-05-19',
+    employeeId: 'E004',
+    employeeName: 'Eva Martinez',
+    department: 'Marketing',
+    status: 'Present',
+    checkInTime: '09:15 AM',
+  },
+  {
+    id: 'att-20250519-E005',
+    date: '2025-05-19',
+    employeeId: 'E005',
+    employeeName: 'David Chen',
+    department: 'Finance',
+    status: 'Present',
+    checkInTime: '09:00 AM',
+  },
+
+  // Today / Current Date seed generator
+  ...generateCurrentDateAttendance(),
+];
+
+function generateCurrentDateAttendance(): AttendanceRecord[] {
+  const today = new Date().toISOString().split('T')[0];
+  const statuses: ('Present' | 'Absent' | 'Leave' | 'Late')[] = ['Present', 'Present', 'Present', 'Absent', 'Leave', 'Late', 'Present', 'Present'];
+  
+  return INITIAL_EMPLOYEES.map((emp, index) => {
+    const status = statuses[index % statuses.length];
+    return {
+      id: `att-${today}-${emp.id}`,
+      date: today,
+      employeeId: emp.id,
+      employeeName: emp.name,
+      department: emp.department,
+      status: status,
+      checkInTime: status === 'Present' ? '09:00 AM' : status === 'Late' ? '09:45 AM' : undefined,
+      notes: status === 'Leave' ? 'Planned leave' : undefined,
+    };
+  });
+}
+
+export const INITIAL_REPORTS: SavedReport[] = [
+  {
+    id: 'rep-001',
+    title: 'Monthly Attendance Summary - May 2025',
+    startDate: '2025-05-01',
+    endDate: '2025-05-31',
+    generatedAt: '2025-05-20 18:00',
+    generatedBy: 'Sarah Connor (Admin)',
+    departmentFilter: 'All Departments',
+    totalRecords: 160,
+    presentCount: 132,
+    absentCount: 12,
+    leaveCount: 10,
+    lateCount: 6,
+    attendancePercentage: 86.25,
+    records: INITIAL_ATTENDANCE.filter(a => a.date.startsWith('2025-05')),
+  },
+];
+
+export const INITIAL_LEAVE_REQUESTS: LeaveRequest[] = [
+  {
+    id: 'lr-101',
+    employeeId: 'E001',
+    employeeName: 'John Doe',
+    department: 'Engineering',
+    type: 'Employee',
+    designation: 'Senior Software Engineer',
+    email: 'john.doe@company.com',
+    phone: '+1 (555) 019-2834',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    startDate: '2025-05-21',
+    reason: 'Family urgent matter requiring travel out of state for 2 days.',
+    status: 'Pending',
+    appliedAt: '2025-05-20 08:30 AM',
+  },
+  {
+    id: 'lr-102',
+    employeeId: 'S101',
+    employeeName: 'Clara Oswald',
+    department: 'Computer Science Dept',
+    type: 'Student',
+    designation: 'Undergraduate Student',
+    email: 'clara.oswald@university.edu',
+    phone: '+1 (555) 011-3329',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    startDate: '2025-05-22',
+    reason: 'Medical consultation and recovery rest.',
+    status: 'Pending',
+    appliedAt: '2025-05-19 14:15 PM',
+  },
+];
+
+export const DEPARTMENTS = [
+  'All Departments',
+  'Engineering',
+  'Human Resources',
+  'Marketing',
+  'Finance',
+  'Computer Science Dept',
+  'Mathematics Dept',
+];

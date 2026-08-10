@@ -1,0 +1,6 @@
+{
+  "name": "Attendance Management System",
+  "description": "Comprehensive Attendance Management System for tracking daily employee and student attendance, managing users, search/filter records, and exporting reports in Excel and PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
