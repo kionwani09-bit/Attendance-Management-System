@@ -1,12 +1,12 @@
 {
-  "projectId": "vibrant-airfoil-bkpr3",
-  "appId": "1:440070222605:web:da5e8b626e0ddff14db644",
-  "apiKey": "AIzaSyBoECdbIKOLMcHKjzD3ZIQ0geFHzAJaHuY",
-  "authDomain": "vibrant-airfoil-bkpr3.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-attendancemanage-34be88a5-fb60-405b-8685-aea0509eb7aa",
-  "storageBucket": "vibrant-airfoil-bkpr3.firebasestorage.app",
-  "messagingSenderId": "440070222605",
-  "measurementId": "",
-  "oAuthClientId": "440070222605-9ojgpqo72cd09kq0uj7uc7133qpvkrdb.apps.googleusercontent.com",
+  "projectId": "attendance-395f7",
+  "appId": "1:639288489213:web:ea4ea701e21b7858d5fa94",
+  "apiKey": "AIzaSyB5EHyqEC6r15evOPsTAXgIlTvhsvzIins",
+  "authDomain": "attendance-395f7.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "attendance-395f7.firebasestorage.app",
+  "messagingSenderId": "639288489213",
+  "measurementId": "G-LG2KBBGJE2",
+  "oAuthClientId": "",
   "recaptchaSiteKey": ""
 }
