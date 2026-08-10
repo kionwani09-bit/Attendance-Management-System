@@ -73,8 +73,8 @@ export default function App() {
   };
 
   // Auth Handlers
-  const handleLogin = async (email: string) => {
-    const res = await api.login(email);
+  const handleLogin = async (email: string, password?: string) => {
+    const res = await api.login(email, password);
     setCurrentUser(res.user);
     setIsLoginModalOpen(false);
     if (res.user.role === 'Student/Employee') {
@@ -89,8 +89,20 @@ export default function App() {
     name: string;
     role: Role;
     department: string;
+    password?: string;
   }) => {
     const res = await api.register(data);
+    setCurrentUser(res.user);
+    setIsLoginModalOpen(false);
+    if (res.user.role === 'Student/Employee') {
+      setActiveTab('my_attendance');
+    } else {
+      setActiveTab('dashboard');
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    const res = await api.loginWithGoogle();
     setCurrentUser(res.user);
     setIsLoginModalOpen(false);
     if (res.user.role === 'Student/Employee') {
@@ -188,6 +200,7 @@ export default function App() {
         isOpen={true}
         onLogin={handleLogin}
         onRegister={handleRegister}
+        onGoogleLogin={handleGoogleLogin}
       />
     );
   }
@@ -269,6 +282,13 @@ export default function App() {
           )}
         </main>
       </div>
+
+      <LoginModal
+        isOpen={isLoginModalOpen || !currentUser}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        onGoogleLogin={handleGoogleLogin}
+      />
     </div>
   );
 }

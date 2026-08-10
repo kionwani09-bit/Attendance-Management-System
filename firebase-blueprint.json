@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "users": {
+      "title": "users",
+      "description": "Registered application users and profiles",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "department": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "avatar": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["email", "name", "role"]
+    },
+    "employees": {
+      "title": "employees",
+      "description": "Employee and student records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "name": { "type": "string" },
+        "department": { "type": "string" },
+        "role": { "type": "string" },
+        "designation": { "type": "string" },
+        "type": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "avatar": { "type": "string" },
+        "status": { "type": "string" },
+        "joinDate": { "type": "string" }
+      },
+      "required": ["employeeId", "name", "department"]
+    },
+    "attendance": {
+      "title": "attendance",
+      "description": "Daily attendance logs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "date": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "department": { "type": "string" },
+        "status": { "type": "string" },
+        "checkIn": { "type": "string" },
+        "checkOut": { "type": "string" },
+        "notes": { "type": "string" },
+        "verifiedBy": { "type": "string" }
+      },
+      "required": ["date", "employeeId", "status"]
+    },
+    "leaveRequests": {
+      "title": "leaveRequests",
+      "description": "Leave applications from employees/students",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "employeeId": { "type": "string" },
+        "employeeName": { "type": "string" },
+        "department": { "type": "string" },
+        "type": { "type": "string" },
+        "designation": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "avatar": { "type": "string" },
+        "startDate": { "type": "string" },
+        "reason": { "type": "string" },
+        "status": { "type": "string" },
+        "appliedAt": { "type": "string" },
+        "reviewedAt": { "type": "string" },
+        "reviewedBy": { "type": "string" }
+      },
+      "required": ["employeeId", "employeeName", "startDate", "reason", "status"]
+    },
+    "savedReports": {
+      "title": "savedReports",
+      "description": "Saved attendance and analytics reports",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "generatedAt": { "type": "string" },
+        "dateRange": { "type": "string" },
+        "recordsCount": { "type": "number" },
+        "summary": { "type": "string" },
+        "format": { "type": "string" }
+      },
+      "required": ["title", "generatedAt"]
+    }
+  }
+}

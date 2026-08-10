@@ -32,11 +32,12 @@ export interface User {
   department?: string;
   avatar?: string;
   employeeId?: string; // linked employee/student profile ID
-  createdAt: string;
+  createdAt?: string;
 }
 
 export interface Employee {
   id: string; // e.g. E001, E002, S101
+  employeeId?: string;
   name: string;
   email: string;
   type: EmployeeType;
@@ -55,8 +56,11 @@ export interface AttendanceRecord {
   employeeName: string;
   department: string;
   status: AttendanceStatus;
+  checkIn?: string;
+  checkOut?: string;
   checkInTime?: string;
   notes?: string;
+  verifiedBy?: string;
 }
 
 export interface AttendanceSummary {
