@@ -30,13 +30,6 @@ import {
   LeaveRequest,
   LeaveStatus,
 } from '../types';
-import {
-  INITIAL_USERS,
-  INITIAL_EMPLOYEES,
-  INITIAL_ATTENDANCE,
-  INITIAL_REPORTS,
-  INITIAL_LEAVE_REQUESTS,
-} from '../data/mockData';
 
 const STORAGE_KEYS = {
   USERS: 'ams_users',
@@ -65,20 +58,35 @@ function setLocalData<T>(key: string, data: T): void {
 }
 
 export function initLocalStorage(): void {
+  // Clear any legacy mock data stored in local storage
+  const mockIds = ['u1', 'E001', 'att-20250520-E001', 'rep-001', 'lr-101'];
+  for (const key of Object.values(STORAGE_KEYS)) {
+    if (key === STORAGE_KEYS.CURRENT_USER) continue;
+    const item = localStorage.getItem(key);
+    if (item) {
+      try {
+        const parsed = JSON.parse(item);
+        if (Array.isArray(parsed) && parsed.some((x: any) => mockIds.includes(x?.id))) {
+          localStorage.setItem(key, JSON.stringify([]));
+        }
+      } catch (e) {}
+    }
+  }
+
   if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
-    setLocalData(STORAGE_KEYS.USERS, INITIAL_USERS);
+    setLocalData(STORAGE_KEYS.USERS, []);
   }
   if (!localStorage.getItem(STORAGE_KEYS.EMPLOYEES)) {
-    setLocalData(STORAGE_KEYS.EMPLOYEES, INITIAL_EMPLOYEES);
+    setLocalData(STORAGE_KEYS.EMPLOYEES, []);
   }
   if (!localStorage.getItem(STORAGE_KEYS.ATTENDANCE)) {
-    setLocalData(STORAGE_KEYS.ATTENDANCE, INITIAL_ATTENDANCE);
+    setLocalData(STORAGE_KEYS.ATTENDANCE, []);
   }
   if (!localStorage.getItem(STORAGE_KEYS.REPORTS)) {
-    setLocalData(STORAGE_KEYS.REPORTS, INITIAL_REPORTS);
+    setLocalData(STORAGE_KEYS.REPORTS, []);
   }
   if (!localStorage.getItem(STORAGE_KEYS.LEAVE_REQUESTS)) {
-    setLocalData(STORAGE_KEYS.LEAVE_REQUESTS, INITIAL_LEAVE_REQUESTS);
+    setLocalData(STORAGE_KEYS.LEAVE_REQUESTS, []);
   }
 }
 
@@ -102,7 +110,7 @@ export const api = {
         userProfile = { id: uid, ...userSnap.data() } as User;
       } else {
         // Fallback user matching or creation
-        const localUsers = getLocalData<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+        const localUsers = getLocalData<User[]>(STORAGE_KEYS.USERS, []);
         const matched = localUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
 
         userProfile = {
@@ -142,7 +150,7 @@ export const api = {
         try {
           const createCred = await createUserWithEmailAndPassword(auth, email, effectivePassword);
           const uid = createCred.user.uid;
-          const localUsers = getLocalData<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+          const localUsers = getLocalData<User[]>(STORAGE_KEYS.USERS, []);
           const matched = localUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
 
           const userProfile: User = {
@@ -164,7 +172,7 @@ export const api = {
       }
 
       // Local fallback
-      const users = getLocalData<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+      const users = getLocalData<User[]>(STORAGE_KEYS.USERS, []);
       const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
 
       if (!user) {
@@ -232,7 +240,7 @@ export const api = {
       }
 
       // Also sync to local storage
-      const users = getLocalData<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+      const users = getLocalData<User[]>(STORAGE_KEYS.USERS, []);
       users.unshift(newUser);
       setLocalData(STORAGE_KEYS.USERS, users);
       setLocalData(STORAGE_KEYS.CURRENT_USER, newUser);
@@ -256,7 +264,7 @@ export const api = {
       }
 
       // Local fallback registration
-      const users = getLocalData<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
+      const users = getLocalData<User[]>(STORAGE_KEYS.USERS, []);
       const existing = users.find((u) => u.email.toLowerCase() === userData.email.toLowerCase());
       if (existing) {
         throw new Error('An account with this email already exists.');
@@ -409,17 +417,12 @@ export const api = {
         setLocalData(STORAGE_KEYS.EMPLOYEES, emps);
         return emps;
       } else {
-        // Seed Firestore with INITIAL_EMPLOYEES if collection is brand new!
-        console.log('Seeding Firestore employees collection...');
-        for (const emp of INITIAL_EMPLOYEES) {
-          await setDoc(doc(db, 'employees', emp.id), emp);
-        }
-        setLocalData(STORAGE_KEYS.EMPLOYEES, INITIAL_EMPLOYEES);
-        return INITIAL_EMPLOYEES;
+        setLocalData(STORAGE_KEYS.EMPLOYEES, []);
+        return [];
       }
     } catch (e) {
       console.warn('Firestore getEmployees fallback to LocalStorage:', e);
-      return getLocalData<Employee[]>(STORAGE_KEYS.EMPLOYEES, INITIAL_EMPLOYEES);
+      return getLocalData<Employee[]>(STORAGE_KEYS.EMPLOYEES, []);
     }
   },
 
@@ -445,7 +448,7 @@ export const api = {
       console.warn('Firestore addEmployee failed, saving locally:', e);
     }
 
-    const emps = getLocalData<Employee[]>(STORAGE_KEYS.EMPLOYEES, INITIAL_EMPLOYEES);
+    const emps = getLocalData<Employee[]>(STORAGE_KEYS.EMPLOYEES, []);
     emps.unshift(newEmp);
     setLocalData(STORAGE_KEYS.EMPLOYEES, emps);
     return newEmp;
@@ -459,7 +462,7 @@ export const api = {
       console.warn('Firestore updateEmployee failed:', e);
     }
 
-    const emps = getLocalData<Employee[]>(STORAGE_KEYS.EMPLOYEES, INITIAL_EMPLOYEES);
+    const emps = getLocalData<Employee[]>(STORAGE_KEYS.EMPLOYEES, []);
     const idx = emps.findIndex((e) => e.id === id);
     if (idx !== -1) {
       emps[idx] = { ...emps[idx], ...updates };
@@ -477,7 +480,7 @@ export const api = {
       console.warn('Firestore deleteEmployee failed:', e);
     }
 
-    const emps = getLocalData<Employee[]>(STORAGE_KEYS.EMPLOYEES, INITIAL_EMPLOYEES);
+    const emps = getLocalData<Employee[]>(STORAGE_KEYS.EMPLOYEES, []);
     const filtered = emps.filter((e) => e.id !== id);
     setLocalData(STORAGE_KEYS.EMPLOYEES, filtered);
   },
@@ -495,17 +498,12 @@ export const api = {
         setLocalData(STORAGE_KEYS.ATTENDANCE, records);
         return records;
       } else {
-        // Seed Firestore with INITIAL_ATTENDANCE if empty
-        console.log('Seeding Firestore attendance collection...');
-        for (const att of INITIAL_ATTENDANCE) {
-          await setDoc(doc(db, 'attendance', att.id), att);
-        }
-        setLocalData(STORAGE_KEYS.ATTENDANCE, INITIAL_ATTENDANCE);
-        return INITIAL_ATTENDANCE;
+        setLocalData(STORAGE_KEYS.ATTENDANCE, []);
+        return [];
       }
     } catch (e) {
       console.warn('Firestore getAttendance fallback:', e);
-      return getLocalData<AttendanceRecord[]>(STORAGE_KEYS.ATTENDANCE, INITIAL_ATTENDANCE);
+      return getLocalData<AttendanceRecord[]>(STORAGE_KEYS.ATTENDANCE, []);
     }
   },
 
@@ -517,7 +515,7 @@ export const api = {
     const allEmployees = await api.getEmployees();
     const currentAttendance = getLocalData<AttendanceRecord[]>(
       STORAGE_KEYS.ATTENDANCE,
-      INITIAL_ATTENDANCE
+      []
     );
 
     const updatedRecords: AttendanceRecord[] = [...currentAttendance];
@@ -573,17 +571,12 @@ export const api = {
         setLocalData(STORAGE_KEYS.LEAVE_REQUESTS, lrs);
         return lrs;
       } else {
-        // Seed Firestore
-        console.log('Seeding Firestore leaveRequests collection...');
-        for (const lr of INITIAL_LEAVE_REQUESTS) {
-          await setDoc(doc(db, 'leaveRequests', lr.id), lr);
-        }
-        setLocalData(STORAGE_KEYS.LEAVE_REQUESTS, INITIAL_LEAVE_REQUESTS);
-        return INITIAL_LEAVE_REQUESTS;
+        setLocalData(STORAGE_KEYS.LEAVE_REQUESTS, []);
+        return [];
       }
     } catch (e) {
       console.warn('Firestore getLeaveRequests fallback:', e);
-      return getLocalData<LeaveRequest[]>(STORAGE_KEYS.LEAVE_REQUESTS, INITIAL_LEAVE_REQUESTS);
+      return getLocalData<LeaveRequest[]>(STORAGE_KEYS.LEAVE_REQUESTS, []);
     }
   },
 
@@ -607,7 +600,7 @@ export const api = {
       console.warn('Firestore createLeaveRequest failed:', e);
     }
 
-    const requests = getLocalData<LeaveRequest[]>(STORAGE_KEYS.LEAVE_REQUESTS, INITIAL_LEAVE_REQUESTS);
+    const requests = getLocalData<LeaveRequest[]>(STORAGE_KEYS.LEAVE_REQUESTS, []);
     requests.unshift(newRequest);
     setLocalData(STORAGE_KEYS.LEAVE_REQUESTS, requests);
     return newRequest;
@@ -619,7 +612,7 @@ export const api = {
     reviewerName: string
   ): Promise<LeaveRequest> => {
     initLocalStorage();
-    const requests = getLocalData<LeaveRequest[]>(STORAGE_KEYS.LEAVE_REQUESTS, INITIAL_LEAVE_REQUESTS);
+    const requests = getLocalData<LeaveRequest[]>(STORAGE_KEYS.LEAVE_REQUESTS, []);
     const idx = requests.findIndex((r) => r.id === id);
 
     if (idx === -1) throw new Error('Leave request not found');
@@ -673,14 +666,11 @@ export const api = {
         setLocalData(STORAGE_KEYS.REPORTS, reps);
         return reps;
       } else {
-        for (const rep of INITIAL_REPORTS) {
-          await setDoc(doc(db, 'savedReports', rep.id), rep);
-        }
-        setLocalData(STORAGE_KEYS.REPORTS, INITIAL_REPORTS);
-        return INITIAL_REPORTS;
+        setLocalData(STORAGE_KEYS.REPORTS, []);
+        return [];
       }
     } catch (e) {
-      return getLocalData<SavedReport[]>(STORAGE_KEYS.REPORTS, INITIAL_REPORTS);
+      return getLocalData<SavedReport[]>(STORAGE_KEYS.REPORTS, []);
     }
   },
 
@@ -700,7 +690,7 @@ export const api = {
       console.warn('Firestore saveReport failed:', e);
     }
 
-    const reports = getLocalData<SavedReport[]>(STORAGE_KEYS.REPORTS, INITIAL_REPORTS);
+    const reports = getLocalData<SavedReport[]>(STORAGE_KEYS.REPORTS, []);
     reports.unshift(newReport);
     setLocalData(STORAGE_KEYS.REPORTS, reports);
     return newReport;

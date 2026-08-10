@@ -19,7 +19,6 @@ import {
   LeaveStatus,
   EmployeeType,
 } from './types';
-import { INITIAL_USERS } from './data/mockData';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -27,8 +26,8 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
 
-  // Default to 2025-05-20 (Notebook sample date) so user sees handwritten example instantly
-  const [selectedDate, setSelectedDate] = useState('2025-05-20');
+  // Default to today's date
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
 
   // Application Data States
   const [employees, setEmployees] = useState<Employee[]>([]);
