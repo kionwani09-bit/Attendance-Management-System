@@ -6,7 +6,6 @@ import {
   ArrowRight,
   AlertCircle,
   Key,
-  ShieldCheck,
 } from 'lucide-react';
 import { Role } from '../types';
 
@@ -194,39 +193,35 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             disabled={loading}
             className="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2 mt-3"
           >
-            <span>{loading ? 'Authenticating...' : isRegisterMode ? 'Register Account' : 'Sign In'}</span>
+            <span>{loading ? 'Authenticating...' : isRegisterMode ? 'Sign Up' : 'Sign In'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <div className="text-center pt-3 border-t border-slate-100 text-xs text-slate-500 space-y-2">
-          <div>
-            {isRegisterMode ? (
-              <span>
-                Already have an account?{' '}
-                <button
-                  onClick={() => setIsRegisterMode(false)}
-                  className="text-indigo-600 font-bold hover:underline cursor-pointer"
-                >
-                  Sign In
-                </button>
-              </span>
-            ) : (
-              <span>
-                Don't have an account?{' '}
-                <button
-                  onClick={() => setIsRegisterMode(true)}
-                  className="text-indigo-600 font-bold hover:underline cursor-pointer"
-                >
-                  Create one
-                </button>
-              </span>
-            )}
-          </div>
-          <div className="flex items-center justify-center gap-1 text-[11px] text-slate-400">
-            <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
-            <span>Secure Enterprise Authentication</span>
-          </div>
+        <div className="text-center pt-3 border-t border-slate-100 text-xs text-slate-500">
+          {isRegisterMode ? (
+            <span>
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={() => setIsRegisterMode(false)}
+                className="text-indigo-600 font-bold hover:underline cursor-pointer"
+              >
+                Sign In
+              </button>
+            </span>
+          ) : (
+            <span>
+              Don't have an account?{' '}
+              <button
+                type="button"
+                onClick={() => setIsRegisterMode(true)}
+                className="text-indigo-600 font-bold hover:underline cursor-pointer"
+              >
+                Sign Up
+              </button>
+            </span>
+          )}
         </div>
       </div>
     </div>
