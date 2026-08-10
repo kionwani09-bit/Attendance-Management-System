@@ -123,6 +123,20 @@ export const api = {
     } catch (fbError: any) {
       console.warn('Firebase login attempt failed or user not yet registered in Firebase Auth:', fbError?.code || fbError);
 
+      if (
+        fbError?.code === 'auth/operation-not-allowed' ||
+        fbError?.message?.includes('operation-not-allowed')
+      ) {
+        throw new Error('Email/Password sign-in is disabled in your Firebase Console. Please go to Firebase Console > Authentication > Sign-in method and enable "Email/Password".');
+      }
+
+      if (
+        fbError?.code === 'auth/unauthorized-domain' ||
+        fbError?.message?.includes('unauthorized-domain')
+      ) {
+        throw new Error('This domain is not authorized in Firebase. Please add your Vercel domain to Firebase Console > Authentication > Settings > Authorized domains.');
+      }
+
       // If user is not found in Firebase Auth, attempt auto-registration for demo or fallback to local user
       if (fbError?.code === 'auth/user-not-found' || fbError?.code === 'auth/invalid-credential') {
         try {
@@ -227,6 +241,20 @@ export const api = {
     } catch (fbError: any) {
       console.warn('Firebase registration failed:', fbError);
 
+      if (
+        fbError?.code === 'auth/operation-not-allowed' ||
+        fbError?.message?.includes('operation-not-allowed')
+      ) {
+        throw new Error('Email/Password authentication is disabled in your Firebase Console. Enable "Email/Password" under Firebase Console > Authentication > Sign-in method.');
+      }
+
+      if (
+        fbError?.code === 'auth/unauthorized-domain' ||
+        fbError?.message?.includes('unauthorized-domain')
+      ) {
+        throw new Error('This domain is not authorized in Firebase. Add your Vercel deployment domain to Firebase Console > Authentication > Settings > Authorized domains.');
+      }
+
       // Local fallback registration
       const users = getLocalData<User[]>(STORAGE_KEYS.USERS, INITIAL_USERS);
       const existing = users.find((u) => u.email.toLowerCase() === userData.email.toLowerCase());
@@ -280,6 +308,20 @@ export const api = {
       setLocalData(STORAGE_KEYS.CURRENT_USER, userProfile);
       return { token: firebaseUser.refreshToken, user: userProfile };
     } catch (err: any) {
+      if (
+        err?.code === 'auth/operation-not-allowed' ||
+        err?.message?.includes('operation-not-allowed')
+      ) {
+        throw new Error('Google Sign-In is disabled in your Firebase Console. Enable "Google" under Firebase Console > Authentication > Sign-in method.');
+      }
+
+      if (
+        err?.code === 'auth/unauthorized-domain' ||
+        err?.message?.includes('unauthorized-domain')
+      ) {
+        throw new Error('This Vercel domain is not authorized in Firebase. Add your Vercel deployment domain to Firebase Console > Authentication > Settings > Authorized domains.');
+      }
+
       if (
         err?.code === 'auth/popup-closed-by-user' ||
         err?.code === 'auth/cancelled-popup-request' ||
