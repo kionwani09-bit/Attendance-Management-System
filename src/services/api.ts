@@ -57,6 +57,16 @@ function setLocalData<T>(key: string, data: T): void {
   }
 }
 
+// Timeout helper to avoid 10-second backend connection blocks when offline or slow
+function withTimeout<T>(promise: Promise<T>, timeoutMs = 3000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Firestore request timed out after ${timeoutMs}ms`)), timeoutMs)
+    ),
+  ]);
+}
+
 export function initLocalStorage(): void {
   // Clear any legacy mock data stored in local storage
   const mockIds = ['u1', 'E001', 'att-20250520-E001', 'rep-001', 'lr-101'];
@@ -103,7 +113,7 @@ export const api = {
 
       // Fetch user profile from Firestore
       const userDocRef = doc(db, 'users', uid);
-      const userSnap = await getDoc(userDocRef);
+      const userSnap = await withTimeout(getDoc(userDocRef));
 
       let userProfile: User;
       if (userSnap.exists()) {
@@ -135,7 +145,7 @@ export const api = {
       try {
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('email', '==', email.toLowerCase()));
-        const querySnap = await getDocs(q);
+        const querySnap = await withTimeout(getDocs(q));
         if (!querySnap.empty) {
           const matchedDoc = querySnap.docs[0];
           const userProfile = { id: matchedDoc.id, ...matchedDoc.data() } as User;
@@ -368,7 +378,7 @@ export const api = {
   getEmployees: async (): Promise<Employee[]> => {
     initLocalStorage();
     try {
-      const snap = await getDocs(collection(db, 'employees'));
+      const snap = await withTimeout(getDocs(collection(db, 'employees')));
       if (!snap.empty) {
         const emps: Employee[] = [];
         snap.forEach((docSnap) => {
@@ -449,7 +459,7 @@ export const api = {
   getAttendance: async (filter?: FilterOptions): Promise<AttendanceRecord[]> => {
     initLocalStorage();
     try {
-      const snap = await getDocs(collection(db, 'attendance'));
+      const snap = await withTimeout(getDocs(collection(db, 'attendance')));
       if (!snap.empty) {
         const records: AttendanceRecord[] = [];
         snap.forEach((docSnap) => {
@@ -522,7 +532,7 @@ export const api = {
   getLeaveRequests: async (): Promise<LeaveRequest[]> => {
     initLocalStorage();
     try {
-      const snap = await getDocs(collection(db, 'leaveRequests'));
+      const snap = await withTimeout(getDocs(collection(db, 'leaveRequests')));
       if (!snap.empty) {
         const lrs: LeaveRequest[] = [];
         snap.forEach((docSnap) => {
@@ -617,7 +627,7 @@ export const api = {
   getReports: async (): Promise<SavedReport[]> => {
     initLocalStorage();
     try {
-      const snap = await getDocs(collection(db, 'savedReports'));
+      const snap = await withTimeout(getDocs(collection(db, 'savedReports')));
       if (!snap.empty) {
         const reps: SavedReport[] = [];
         snap.forEach((docSnap) => {

@@ -1,6 +1,11 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from 'firebase/firestore';
 import firebaseConfigJson from '../../firebase-applet-config.json';
 
 const config = {
@@ -20,7 +25,22 @@ const databaseId =
 
 const app = getApps().length === 0 ? initializeApp(config) : getApps()[0];
 const auth = getAuth(app);
-const db = databaseId ? getFirestore(app, databaseId) : getFirestore(app);
+
+// Initialize Firestore with persistent offline cache to prevent 10s timeout blocks
+let db;
+try {
+  db = initializeFirestore(
+    app,
+    {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    },
+    databaseId
+  );
+} catch (e) {
+  db = databaseId ? getFirestore(app, databaseId) : getFirestore(app);
+}
+
 const googleProvider = new GoogleAuthProvider();
 
 export { app, auth, db, googleProvider };
+

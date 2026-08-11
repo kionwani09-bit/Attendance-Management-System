@@ -123,88 +123,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Role-Specific Top Bar Header */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
-              {userRole === 'Admin'
-                ? 'System Administrator'
-                : userRole === 'Teacher/HR'
-                ? 'HR & Department Portal'
-                : 'Employee Self-Service'}
-            </span>
-            <span className="text-xs text-slate-400">• Logged in as {currentUser?.name}</span>
-          </div>
-
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            {userRole === 'Admin'
-              ? 'Administrator Control Panel'
-              : userRole === 'Teacher/HR'
-              ? 'Department Management Console'
-              : 'Personal Attendance Portal'}
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {userRole === 'Admin'
-              ? 'Full organizational oversight, directory management, and system-wide attendance audit.'
-              : userRole === 'Teacher/HR'
-              ? 'Department workforce management, daily verification, and report generation.'
-              : 'Overview of your personal attendance logs, present history, and leave requests.'}
-          </p>
+      {/* Date Selector Header */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-5 h-5 text-indigo-600" />
+          <span className="text-sm font-bold text-slate-800">Attendance Date</span>
         </div>
 
-        {/* Date Selector & Action Shortcuts */}
-        <div className="flex flex-wrap items-center gap-2">
-          {userRole !== 'Student/Employee' && (
-            <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg">
-              <span className="text-xs font-medium text-slate-500">Date:</span>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-transparent text-slate-900 text-xs font-bold focus:outline-none cursor-pointer"
-              />
-            </div>
-          )}
-
-          {userRole === 'Admin' && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onNavigateTab('users')}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs font-semibold rounded-lg cursor-pointer"
-              >
-                <UserPlus className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Manage Directory</span>
-              </button>
-              <button
-                onClick={() => onNavigateTab('mark')}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg cursor-pointer shadow-xs"
-              >
-                <ClipboardCheck className="w-3.5 h-3.5" />
-                <span>Mark Attendance</span>
-              </button>
-            </div>
-          )}
-
-          {userRole === 'Teacher/HR' && (
-            <button
-              onClick={() => onNavigateTab('mark')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg cursor-pointer shadow-xs"
-            >
-              <ClipboardCheck className="w-3.5 h-3.5" />
-              <span>Mark Today's Attendance</span>
-            </button>
-          )}
-
-          {userRole === 'Student/Employee' && (
-            <button
-              onClick={() => onNavigateTab('my_attendance')}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg cursor-pointer shadow-xs"
-            >
-              <UserCheck2 className="w-3.5 h-3.5" />
-              <span>View Full Logs</span>
-            </button>
-          )}
+        <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-2 rounded-lg">
+          <span className="text-xs font-medium text-slate-500">Date:</span>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="bg-transparent text-slate-900 text-xs font-bold focus:outline-none cursor-pointer"
+          />
         </div>
       </div>
 

@@ -11,6 +11,7 @@ import {
   MailCheck,
   CheckCircle2,
   RefreshCw,
+  ShieldCheck,
 } from 'lucide-react';
 import { Role } from '../types';
 import { api } from '../services/api';
@@ -41,7 +42,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
 
   // Register Fields
   const [name, setName] = useState('');
-  const [role, setRole] = useState<Role>('Admin');
+  const [role, setRole] = useState<Role>('Student/Employee');
   const [department, setDepartment] = useState('Engineering');
 
   // Verification & UI States
@@ -328,6 +329,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </div>
           </div>
 
+
+
           {isRegisterMode && (
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -339,9 +342,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   onChange={(e) => setRole(e.target.value as Role)}
                   className="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 font-medium focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 >
-                  <option value="Admin">Admin</option>
-                  <option value="Teacher/HR">Teacher / HR</option>
                   <option value="Student/Employee">Student / Employee</option>
+                  <option value="Teacher/HR">Teacher / HR</option>
                 </select>
               </div>
 
