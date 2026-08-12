@@ -242,7 +242,7 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
             <h3 className="text-base font-bold text-white">Attendance Clock-In</h3>
           </div>
           <p className="text-xs text-indigo-200">
-            Set the exact date from the calendar and the exact clock time to record your attendance for today or another day.
+            Records attendance for today's live calendar date automatically. You can also adjust the date if needed.
           </p>
           {clockSuccessMessage && (
             <div className="text-xs font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-3 py-1 rounded-md flex items-center gap-1.5">

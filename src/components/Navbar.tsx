@@ -56,16 +56,18 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Live Calendar Date & Clock Bar */}
-      <div className="hidden lg:flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs">
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+      <div className="hidden lg:flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-1.5 shadow-2xs">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
           <Calendar className="w-4 h-4 text-indigo-600 shrink-0" />
-          <span className="text-[11px] font-bold uppercase text-slate-500">Date:</span>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
-            className="bg-white border border-slate-200 rounded-md px-2 py-0.5 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
-          />
+          <span className="text-[11px] font-bold uppercase text-slate-500">Calendar Date:</span>
+          <span className="text-xs font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200 font-mono">
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })}
+          </span>
         </div>
 
         <div className="h-4 w-px bg-slate-200"></div>
