@@ -204,7 +204,8 @@ export default function App() {
     );
   }
 
-  const effectiveTab = activeTab;
+  const effectiveTab =
+    currentUser?.role === 'Student/Employee' ? 'my_attendance' : activeTab;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased">
@@ -212,7 +213,6 @@ export default function App() {
       <Navbar
         currentUser={currentUser}
         onLogout={handleLogout}
-        onRoleSwitch={handleRoleSwitch}
         selectedDate={selectedDate}
       />
 
@@ -221,9 +221,7 @@ export default function App() {
         <Sidebar
           activeTab={effectiveTab}
           setActiveTab={(tab) => {
-            if (currentUser?.role === 'Student/Employee' && tab !== 'dashboard' && tab !== 'my_attendance') {
-              return;
-            }
+            if (currentUser?.role === 'Student/Employee') return;
             setActiveTab(tab);
           }}
           userRole={currentUser?.role || 'Admin'}

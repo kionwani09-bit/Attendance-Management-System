@@ -12,14 +12,12 @@ import { User as UserType, Role } from '../types';
 interface NavbarProps {
   currentUser: UserType | null;
   onLogout: () => void;
-  onRoleSwitch?: (role: Role) => void;
   selectedDate?: string;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   onLogout,
-  onRoleSwitch,
 }) => {
   return (
     <header className="h-16 bg-white border-b border-slate-200 text-slate-900 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 shadow-xs">
@@ -37,44 +35,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Center/Right: Role Switcher & User Profile & Logout */}
+      {/* User Profile & Logout */}
       <div className="flex items-center gap-2 sm:gap-4">
-        {currentUser && onRoleSwitch && (
-          <div className="hidden md:flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg border border-slate-200 text-[11px] font-bold">
-            <span className="text-slate-400 px-2 text-[10px] uppercase font-semibold">View Role:</span>
-            <button
-              onClick={() => onRoleSwitch('Admin')}
-              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
-                currentUser.role === 'Admin'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <Shield className="w-3 h-3" /> Admin
-            </button>
-            <button
-              onClick={() => onRoleSwitch('Teacher/HR')}
-              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
-                currentUser.role === 'Teacher/HR'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <GraduationCap className="w-3 h-3" /> Teacher/HR
-            </button>
-            <button
-              onClick={() => onRoleSwitch('Student/Employee')}
-              className={`px-2.5 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
-                currentUser.role === 'Student/Employee'
-                  ? 'bg-indigo-600 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              <User className="w-3 h-3" /> Student/Employee
-            </button>
-          </div>
-        )}
-
         {currentUser && (
           <div className="flex items-center gap-2.5">
             <img
