@@ -76,6 +76,7 @@ export default function App() {
     const res = await api.login(email, password);
     setCurrentUser(res.user);
     setIsLoginModalOpen(false);
+    await loadAllData();
     if (res.user.role === 'Student/Employee') {
       setActiveTab('my_attendance');
     } else {
@@ -93,6 +94,7 @@ export default function App() {
     const res = await api.register(data);
     setCurrentUser(res.user);
     setIsLoginModalOpen(false);
+    await loadAllData();
     if (res.user.role === 'Student/Employee') {
       setActiveTab('my_attendance');
     } else {
@@ -104,6 +106,7 @@ export default function App() {
     const res = await api.loginWithGoogle();
     setCurrentUser(res.user);
     setIsLoginModalOpen(false);
+    await loadAllData();
     if (res.user.role === 'Student/Employee') {
       setActiveTab('my_attendance');
     } else {

@@ -341,26 +341,24 @@ export const api = {
       console.warn('Firestore user doc write error:', fsWriteErr);
     }
 
-    // 3. If Student/Employee, also add to Firestore `employees` collection
-    if (userData.role === 'Student/Employee') {
-      const empRecord: Employee = {
-        id: `emp-${uid}`,
-        employeeId: newUser.employeeId!,
-        name: userData.name,
-        department: userData.department,
-        designation: 'Student / Employee',
-        type: 'Student',
-        email: userData.email,
-        phone: '+1 (555) 000-1122',
-        status: 'Active',
-        joinDate: new Date().toISOString().split('T')[0],
-      };
-      try {
-        await setDoc(doc(db, 'employees', empRecord.id), empRecord);
-        console.log('Successfully saved employee record to Firestore:', empRecord);
-      } catch (empWriteErr) {
-        console.warn('Firestore employee doc write error:', empWriteErr);
-      }
+    // 3. Always add to Firestore `employees` collection so the member is saved in database and counted
+    const empRecord: Employee = {
+      id: `emp-${uid}`,
+      employeeId: newUser.employeeId!,
+      name: userData.name,
+      department: userData.department || 'General',
+      designation: userData.role === 'Student/Employee' ? 'Student' : userData.role === 'Teacher/HR' ? 'Teacher / HR' : 'Administrator',
+      type: userData.role === 'Student/Employee' ? 'Student' : 'Employee',
+      email: userData.email,
+      phone: '+1 (555) 000-1122',
+      status: 'Active',
+      joinDate: new Date().toISOString().split('T')[0],
+    };
+    try {
+      await setDoc(doc(db, 'employees', empRecord.id), empRecord, { merge: true });
+      console.log('Successfully saved employee record to Firestore:', empRecord);
+    } catch (empWriteErr) {
+      console.warn('Firestore employee doc write error:', empWriteErr);
     }
 
     // 4. Save into local storage
@@ -499,17 +497,57 @@ export const api = {
   getEmployees: async (): Promise<Employee[]> => {
     initLocalStorage();
     try {
-      const snap = await withTimeout(getDocs(collection(db, 'employees')));
-      if (!snap.empty) {
-        const emps: Employee[] = [];
-        snap.forEach((docSnap) => {
-          emps.push({ id: docSnap.id, ...docSnap.data() } as Employee);
-        });
-        setLocalData(STORAGE_KEYS.EMPLOYEES, emps);
-        return emps;
+      const empsMap = new Map<string, Employee>();
+
+      // 1. Fetch from employees collection in Firestore
+      try {
+        const snap = await withTimeout(getDocs(collection(db, 'employees')));
+        if (!snap.empty) {
+          snap.forEach((docSnap) => {
+            const data = docSnap.data() as Employee;
+            const key = (data.email || docSnap.id).toLowerCase();
+            empsMap.set(key, { id: docSnap.id, ...data });
+          });
+        }
+      } catch (e) {
+        console.warn('Firestore employees collection fetch notice:', e);
+      }
+
+      // 2. Fetch from users collection in Firestore to ensure all registered accounts in database are included
+      try {
+        const usersSnap = await withTimeout(getDocs(collection(db, 'users')));
+        if (!usersSnap.empty) {
+          usersSnap.forEach((docSnap) => {
+            const u = docSnap.data() as User;
+            if (u && u.email) {
+              const key = u.email.toLowerCase();
+              if (!empsMap.has(key)) {
+                empsMap.set(key, {
+                  id: `emp-${u.id}`,
+                  employeeId: u.employeeId || `E${Math.floor(100 + Math.random() * 900)}`,
+                  name: u.name || u.email.split('@')[0],
+                  email: u.email,
+                  type: u.role === 'Student/Employee' ? 'Student' : 'Employee',
+                  department: u.department || 'General',
+                  designation: u.role || 'Member',
+                  phone: '+1 (555) 000-1122',
+                  status: 'Active',
+                  joinDate: u.createdAt ? u.createdAt.split('T')[0] : new Date().toISOString().split('T')[0],
+                });
+              }
+            }
+          });
+        }
+      } catch (uErr) {
+        console.warn('Firestore users collection merge notice:', uErr);
+      }
+
+      const allEmps = Array.from(empsMap.values());
+      if (allEmps.length > 0) {
+        setLocalData(STORAGE_KEYS.EMPLOYEES, allEmps);
+        return allEmps;
       } else {
-        setLocalData(STORAGE_KEYS.EMPLOYEES, []);
-        return [];
+        return getLocalData<Employee[]>(STORAGE_KEYS.EMPLOYEES, []);
       }
     } catch (e) {
       console.warn('Firestore getEmployees fallback to LocalStorage:', e);

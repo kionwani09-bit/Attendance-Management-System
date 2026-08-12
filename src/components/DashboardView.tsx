@@ -55,7 +55,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const todaysRecords = attendanceRecords.filter((r) => r.date === selectedDate);
   const activeEmployees = employees.filter((e) => e.status === 'Active');
 
-  const totalMembers = activeEmployees.length;
+  const totalMembers = employees.length;
   const presentCount = todaysRecords.filter((r) => r.status === 'Present').length;
   const absentCount = todaysRecords.filter((r) => r.status === 'Absent').length;
   const leaveCount = todaysRecords.filter((r) => r.status === 'Leave').length;
