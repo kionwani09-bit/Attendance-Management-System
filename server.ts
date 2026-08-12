@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
+import bcrypt from 'bcrypt';
 import {
   INITIAL_USERS,
   INITIAL_EMPLOYEES,
@@ -19,10 +20,58 @@ import {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-let users: User[] = [...INITIAL_USERS];
+// In-memory user passwords map (stores email -> bcrypt hash)
+const userPasswords = new Map<string, string>();
+
+// Seed default users in backend for robust demo verification
+const DEFAULT_USERS: User[] = [
+  {
+    id: 'usr-1',
+    name: 'Sarah Connor',
+    email: 'admin@system.com',
+    role: 'Admin',
+    department: 'Human Resources',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    createdAt: '2024-01-15',
+  },
+  {
+    id: 'usr-2',
+    name: 'Prof. David Miller',
+    email: 'david.m@university.edu',
+    role: 'Teacher/HR',
+    department: 'Computer Science Dept',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    createdAt: '2024-02-01',
+  },
+  {
+    id: 'usr-3',
+    name: 'Alex Johnson',
+    email: 'alex.j@student.edu',
+    role: 'Student/Employee',
+    department: 'Computer Science Dept',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    createdAt: '2024-03-10',
+  },
+  {
+    id: 'usr-4',
+    name: 'Emily Davis',
+    email: 'emily.d@company.com',
+    role: 'Student/Employee',
+    department: 'Engineering',
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80',
+    createdAt: '2024-03-12',
+  },
+];
+
+let users: User[] = [...DEFAULT_USERS];
 let employees: Employee[] = [...INITIAL_EMPLOYEES];
 let attendance: AttendanceRecord[] = [...INITIAL_ATTENDANCE];
 let reports: SavedReport[] = [...INITIAL_REPORTS];
+
+// Seed password hashes on startup
+DEFAULT_USERS.forEach((u) => {
+  userPasswords.set(u.email.toLowerCase(), bcrypt.hashSync('password123', 10));
+});
 
 async function startServer() {
   const app = express();
@@ -36,56 +85,100 @@ async function startServer() {
   });
 
   // Auth Endpoints
-  app.post('/api/auth/login', (req, res) => {
-    const { email, password } = req.body;
-    const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      // 1. Input Handling
+      const { email, password } = req.body;
 
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      if (!email || !password) {
+        return res.status(400).json({
+          success: false,
+          message: 'The email or password you entered is incorrect.',
+        });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+
+      // 2. Database Check
+      const user = users.find((u) => u.email.toLowerCase() === cleanEmail);
+
+      // Security: Constant-time hash fallback to prevent response timing leakage when user doesn't exist
+      const DUMMY_HASH = '$2b$10$e7I3291.6888463836182.dummyhashfortimingmitigation';
+      const passwordHashToCompare = user ? (userPasswords.get(cleanEmail) || DUMMY_HASH) : DUMMY_HASH;
+
+      // 3. Password Verification (bcrypt comparison)
+      const isPasswordValid = await bcrypt.compare(password, passwordHashToCompare);
+
+      // 4. Error Handling & Security: Generic message to block user-enumeration
+      if (!user || !isPasswordValid) {
+        return res.status(401).json({
+          success: false,
+          message: 'The email or password you entered is incorrect.',
+        });
+      }
+
+      // Generate mock JWT token
+      const token = `jwt_token_${user.id}_${Date.now()}`;
+      return res.json({
+        success: true,
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          department: user.department,
+          avatar: user.avatar,
+          employeeId: user.employeeId,
+        },
+      });
+    } catch (error) {
+      console.error('Backend Auth login failure:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'The email or password you entered is incorrect.',
+      });
     }
-
-    // Generate mock JWT token
-    const token = `jwt_token_${user.id}_${Date.now()}`;
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        department: user.department,
-        avatar: user.avatar,
-        employeeId: user.employeeId,
-      },
-    });
   });
 
-  app.post('/api/auth/register', (req, res) => {
-    const { email, name, role, department, employeeId } = req.body;
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const { email, name, role, department, employeeId, password } = req.body;
 
-    if (!email || !name || !role) {
-      return res.status(400).json({ error: 'Email, name, and role are required' });
+      if (!email || !name || !role) {
+        return res.status(400).json({ error: 'Email, name, and role are required' });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+
+      const existing = users.find((u) => u.email.toLowerCase() === cleanEmail);
+      if (existing) {
+        return res.status(400).json({ error: 'An account with this email already exists' });
+      }
+
+      const newUser: User = {
+        id: `u_${Date.now()}`,
+        email: cleanEmail,
+        name,
+        role: role || 'Student/Employee',
+        department: department || 'General',
+        employeeId: employeeId || undefined,
+        avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
+        createdAt: new Date().toISOString().split('T')[0],
+      };
+
+      // Hash password using bcrypt and store
+      const plainPassword = password || 'password123';
+      const hashedPassword = await bcrypt.hash(plainPassword, 10);
+      userPasswords.set(cleanEmail, hashedPassword);
+
+      users.push(newUser);
+      const token = `jwt_token_${newUser.id}_${Date.now()}`;
+      return res.status(201).json({ token, user: newUser });
+    } catch (error) {
+      console.error('Registration Endpoint Error:', error);
+      return res.status(500).json({ error: 'Failed to complete registration' });
     }
-
-    const existing = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (existing) {
-      return res.status(400).json({ error: 'An account with this email already exists' });
-    }
-
-    const newUser: User = {
-      id: `u_${Date.now()}`,
-      email,
-      name,
-      role: role || 'Student/Employee',
-      department: department || 'General',
-      employeeId: employeeId || undefined,
-      avatar: `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80`,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-
-    users.push(newUser);
-    const token = `jwt_token_${newUser.id}_${Date.now()}`;
-    res.status(201).json({ token, user: newUser });
   });
 
   // User Management

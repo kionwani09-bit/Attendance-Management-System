@@ -107,6 +107,33 @@ export const api = {
     const effectivePassword = password && password.length >= 6 ? password : 'password123';
 
     try {
+      // Query the backend Express server first to run real bcrypt hashing & security checks
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password: effectivePassword }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.user) {
+          setLocalData(STORAGE_KEYS.CURRENT_USER, data.user);
+          return { token: data.token, user: data.user };
+        }
+      } else {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'The email or password you entered is incorrect.');
+      }
+    } catch (backendError: any) {
+      if (backendError.message && backendError.message === 'The email or password you entered is incorrect.') {
+        throw backendError;
+      }
+      console.warn('Backend API login failed or was unreachable, falling back to Firebase/Local:', backendError?.message || backendError);
+    }
+
+    try {
       // 1. Attempt real Firebase Authentication
       const userCredential = await signInWithEmailAndPassword(auth, email, effectivePassword);
       const uid = userCredential.user.uid;
