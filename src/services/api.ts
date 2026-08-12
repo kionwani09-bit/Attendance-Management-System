@@ -194,11 +194,43 @@ export const api = {
         const querySnap = await withTimeout(getDocs(q));
         if (!querySnap.empty) {
           const matchedDoc = querySnap.docs[0];
-          const userProfile = { id: matchedDoc.id, ...matchedDoc.data() } as User;
-          setLocalData(STORAGE_KEYS.CURRENT_USER, userProfile);
-          return { token: `fs_${userProfile.id}_${Date.now()}`, user: userProfile };
+          const matchedData = matchedDoc.data();
+          
+          // Verify password! If they registered with password, check it. For default seeded accounts, let them through or match default.
+          const storedPassword = matchedData.password || 'password123';
+          if (storedPassword === effectivePassword) {
+            const userProfile = { id: matchedDoc.id, ...matchedData } as User;
+
+            // Self-healing: since backend check failed, let's sync this back to backend Express DB!
+            try {
+              await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id: userProfile.id,
+                  email: userProfile.email,
+                  name: userProfile.name,
+                  role: userProfile.role,
+                  department: userProfile.department,
+                  employeeId: userProfile.employeeId,
+                  password: effectivePassword,
+                }),
+              });
+              console.log('Successfully self-healed and synced credentials with Express backend');
+            } catch (syncErr) {
+              console.warn('Backend auto-sync during fallback notice:', syncErr);
+            }
+
+            setLocalData(STORAGE_KEYS.CURRENT_USER, userProfile);
+            return { token: `fs_${userProfile.id}_${Date.now()}`, user: userProfile };
+          } else {
+            throw new Error('The email or password you entered is incorrect.');
+          }
         }
-      } catch (fsErr) {
+      } catch (fsErr: any) {
+        if (fsErr.message === 'The email or password you entered is incorrect.') {
+          throw fsErr;
+        }
         console.warn('Firestore user search fallback notice:', fsErr);
       }
 
@@ -288,8 +320,11 @@ export const api = {
 
     // 2. Save user profile into Firestore database (`users` collection)
     try {
-      await setDoc(doc(db, 'users', uid), newUser);
-      console.log('Successfully saved user profile to Firestore database:', newUser);
+      await setDoc(doc(db, 'users', uid), {
+        ...newUser,
+        password: effectivePassword,
+      });
+      console.log('Successfully saved user profile to Firestore database (with password):', newUser.email);
     } catch (fsWriteErr) {
       console.warn('Firestore user doc write error:', fsWriteErr);
     }

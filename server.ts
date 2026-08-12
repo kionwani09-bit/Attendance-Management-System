@@ -155,8 +155,10 @@ async function startServer() {
     try {
       // 1. Input Handling
       const { email, password } = req.body;
+      console.log('[Backend Auth] Login attempt for email:', email, 'password length:', password ? password.length : 0);
 
       if (!email || !password) {
+        console.warn('[Backend Auth] Missing email or password');
         return res.status(400).json({
           success: false,
           message: 'The email or password you entered is incorrect.',
@@ -167,16 +169,20 @@ async function startServer() {
 
       // 2. Database Check
       const user = await findUserByEmail(cleanEmail);
+      console.log('[Backend Auth] User found in DB:', !!user);
 
       // Security: Constant-time hash fallback to prevent response timing leakage when user doesn't exist
       const DUMMY_HASH = '$2b$10$e7I3291.6888463836182.dummyhashfortimingmitigation';
       const passwordHashToCompare = user ? ((await getStoredHash(cleanEmail)) || DUMMY_HASH) : DUMMY_HASH;
+      console.log('[Backend Auth] Password hash to compare:', passwordHashToCompare.substring(0, 15) + '...');
 
       // 3. Password Verification (bcrypt comparison)
       const isPasswordValid = await bcrypt.compare(password, passwordHashToCompare);
+      console.log('[Backend Auth] Password is valid:', isPasswordValid);
 
       // 4. Error Handling & Security: Generic message to block user-enumeration
       if (!user || !isPasswordValid) {
+        console.warn('[Backend Auth] Login failed for:', cleanEmail);
         return res.status(401).json({
           success: false,
           message: 'The email or password you entered is incorrect.',
@@ -185,6 +191,7 @@ async function startServer() {
 
       // Generate mock JWT token
       const token = `jwt_token_${user.id}_${Date.now()}`;
+      console.log('[Backend Auth] Login successful for user:', user.email);
       return res.json({
         success: true,
         token,
@@ -210,8 +217,10 @@ async function startServer() {
   app.post('/api/auth/register', async (req, res) => {
     try {
       const { email, name, role, department, employeeId, password, id } = req.body;
+      console.log('[Backend Auth] Register attempt for:', email, 'name:', name, 'password length:', password ? password.length : 0);
 
       if (!email || !name || !role) {
+        console.warn('[Backend Auth] Missing required registration fields');
         return res.status(400).json({ error: 'Email, name, and role are required' });
       }
 
@@ -219,6 +228,7 @@ async function startServer() {
 
       const existing = await findUserByEmail(cleanEmail);
       if (existing) {
+        console.warn('[Backend Auth] Registration failed: Email already exists:', cleanEmail);
         return res.status(400).json({ error: 'An account with this email already exists' });
       }
 
@@ -236,9 +246,11 @@ async function startServer() {
       // Hash password using bcrypt and store
       const plainPassword = password || 'password123';
       const hashedPassword = await bcrypt.hash(plainPassword, 10);
+      console.log('[Backend Auth] Generated hash for registration:', hashedPassword.substring(0, 15) + '...');
       await saveUserAndHash(newUser, hashedPassword);
 
       const token = `jwt_token_${newUser.id}_${Date.now()}`;
+      console.log('[Backend Auth] Registration successful for user:', newUser.email);
       return res.status(201).json({ token, user: newUser });
     } catch (error) {
       console.error('Registration Endpoint Error:', error);
