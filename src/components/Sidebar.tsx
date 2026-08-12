@@ -26,7 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'dashboard' as TabType,
       label: 'Dashboard Overview',
       icon: LayoutDashboard,
-      roles: ['Admin', 'Teacher/HR'],
+      roles: ['Admin', 'Teacher/HR', 'Student/Employee'],
     },
     {
       id: 'mark' as TabType,
