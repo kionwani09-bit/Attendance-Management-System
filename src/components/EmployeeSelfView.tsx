@@ -40,6 +40,11 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
   const [leaveDate, setLeaveDate] = useState(
     new Date().toISOString().split('T')[0]
   );
+  const [reportBackDate, setReportBackDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  });
   const [leaveReason, setLeaveReason] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -90,6 +95,7 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
     if (!leaveReason) return;
     onRequestLeave({
       startDate: leaveDate,
+      reportBackDate: reportBackDate,
       reason: leaveReason,
       employeeId: empId,
       employeeName: currentUser.name,
@@ -144,7 +150,7 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
                     </h4>
                   </div>
                   <p className="text-xs font-medium">
-                    Your leave application for <span className="font-bold font-mono">{lr.startDate}</span> (Reason: "{lr.reason}") has been{' '}
+                    Your leave application for <span className="font-bold font-mono text-indigo-700">Leave Date: {lr.startDate}</span> (Report Back: <span className="font-bold font-mono text-emerald-700">{lr.reportBackDate || lr.startDate}</span>) (Reason: "{lr.reason}") has been{' '}
                     <span className="font-bold underline">
                       {lr.status === 'Approved' ? 'ACCEPTED' : 'CANCELLED'}
                     </span>{' '}
@@ -245,7 +251,8 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
             <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider font-bold border-b border-slate-100">
               <tr>
                 <th className="py-3 px-4">Applied Date</th>
-                <th className="py-3 px-4">Requested Date</th>
+                <th className="py-3 px-4">Leave Date</th>
+                <th className="py-3 px-4">Report Back Date</th>
                 <th className="py-3 px-4">Reason</th>
                 <th className="py-3 px-4">Approval Status</th>
                 <th className="py-3 px-4">Reviewer Note</th>
@@ -254,7 +261,7 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {myLeaveRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-6 text-slate-400">
+                  <td colSpan={6} className="text-center py-6 text-slate-400">
                     No leave applications submitted yet.
                   </td>
                 </tr>
@@ -263,6 +270,7 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
                   <tr key={lr.id} className="hover:bg-slate-50">
                     <td className="py-3 px-4 font-mono text-slate-500">{lr.appliedAt}</td>
                     <td className="py-3 px-4 font-mono font-bold text-indigo-600">{lr.startDate}</td>
+                    <td className="py-3 px-4 font-mono font-bold text-emerald-600">{lr.reportBackDate || lr.startDate}</td>
                     <td className="py-3 px-4 max-w-xs truncate text-slate-800 font-medium">{lr.reason}</td>
                     <td className="py-3 px-4">
                       {lr.status === 'Pending' && (
@@ -367,17 +375,33 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
               </div>
             ) : (
               <form onSubmit={handleApplyLeave} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Leave Date
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={leaveDate}
-                    onChange={(e) => setLeaveDate(e.target.value)}
-                    className="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Leave Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={leaveDate}
+                      onChange={(e) => setLeaveDate(e.target.value)}
+                      className="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Report Back Date
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={reportBackDate}
+                      min={leaveDate}
+                      onChange={(e) => setReportBackDate(e.target.value)}
+                      className="w-full bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-900 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+                    />
+                  </div>
                 </div>
 
                 <div>

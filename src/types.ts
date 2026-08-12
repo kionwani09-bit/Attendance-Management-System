@@ -17,6 +17,7 @@ export interface LeaveRequest {
   phone?: string;
   avatar?: string;
   startDate: string;
+  reportBackDate?: string;
   reason: string;
   status: LeaveStatus;
   appliedAt: string;

@@ -325,10 +325,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           </span>
                         </div>
 
-                        <div className="pt-2 flex flex-col sm:flex-row sm:items-center gap-2 text-xs">
+                        <div className="pt-2 flex flex-wrap items-center gap-2 text-xs">
                           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50/80 border border-amber-200/60 text-amber-900 font-bold">
                             <Calendar className="w-3.5 h-3.5 text-amber-600" />
-                            Requested Date: <span className="font-mono text-indigo-700">{lr.startDate}</span>
+                            Leave Date: <span className="font-mono text-indigo-700">{lr.startDate}</span>
+                          </div>
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50/80 border border-emerald-200/60 text-emerald-900 font-bold">
+                            <CalendarCheck className="w-3.5 h-3.5 text-emerald-600" />
+                            Report Back Date: <span className="font-mono text-emerald-700">{lr.reportBackDate || lr.startDate}</span>
                           </div>
                           <span className="text-slate-400 text-[11px]">Applied on {lr.appliedAt}</span>
                         </div>
