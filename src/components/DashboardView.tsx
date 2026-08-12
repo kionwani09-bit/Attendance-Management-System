@@ -104,6 +104,38 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Admin Alert Notification for Pending Leave Requests */}
+      {pendingLeaveCount > 0 && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-950 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm animate-fade-in">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 rounded-lg text-amber-700 shrink-0">
+              <Clock className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold flex items-center gap-2">
+                Pending Leave Applications Requiring Decision
+                <span className="px-2 py-0.5 rounded-full text-xs bg-amber-200 text-amber-900 font-bold">
+                  {pendingLeaveCount} Request{pendingLeaveCount > 1 ? 's' : ''}
+                </span>
+              </h4>
+              <p className="text-xs text-amber-800 mt-0.5">
+                Student/Employee or Teacher/HR members have submitted leave requests. Review and approve or decline them below to notify the applicant.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setLeaveFilter('pending');
+              const el = document.getElementById('leave-applications-section');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold cursor-pointer transition-colors shrink-0 shadow-2xs"
+          >
+            Review Now
+          </button>
+        </div>
+      )}
+
       {/* Header Banner */}
       <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
@@ -188,7 +220,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* Leave Requests Approval Management Center */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+      <div id="leave-applications-section" className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
         <div className="px-6 py-4 bg-slate-50/70 border-b border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <CalendarCheck className="w-5 h-5 text-indigo-600" />

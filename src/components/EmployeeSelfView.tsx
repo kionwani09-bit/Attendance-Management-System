@@ -56,6 +56,17 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
     (lr) => lr.employeeId === empId || lr.employeeName.toLowerCase().includes(currentUser.name.toLowerCase())
   );
 
+  // Find latest reviewed leave requests for notification alerts
+  const reviewedRequests = myLeaveRequests.filter(
+    (lr) => lr.status === 'Approved' || lr.status === 'Rejected'
+  );
+
+  const [dismissedNotifs, setDismissedNotifs] = useState<string[]>([]);
+
+  const activeNotifs = reviewedRequests.filter(
+    (lr) => !dismissedNotifs.includes(lr.id)
+  );
+
   const total = myRecords.length;
   const presentCount = myRecords.filter((r) => r.status === 'Present').length;
   const absentCount = myRecords.filter((r) => r.status === 'Absent').length;
@@ -92,6 +103,61 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Leave Request Review Notifications Alert Banner */}
+      {activeNotifs.length > 0 && (
+        <div className="space-y-3">
+          {activeNotifs.map((lr) => (
+            <div
+              key={lr.id}
+              className={`p-4 rounded-xl border flex items-start justify-between gap-4 shadow-sm transition-all ${
+                lr.status === 'Approved'
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-950'
+                  : 'bg-rose-50 border-rose-200 text-rose-950'
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                {lr.status === 'Approved' ? (
+                  <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600 shrink-0">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                ) : (
+                  <div className="p-2 bg-rose-100 rounded-lg text-rose-600 shrink-0">
+                    <XCircle className="w-5 h-5" />
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-full text-[10px] bg-white border border-current">
+                      Notification
+                    </span>
+                    <h4 className="text-sm font-bold">
+                      {lr.status === 'Approved'
+                        ? 'Leave Request ACCEPTED'
+                        : 'Leave Request CANCELLED / DECLINED'}
+                    </h4>
+                  </div>
+                  <p className="text-xs font-medium">
+                    Your leave application for <span className="font-bold font-mono">{lr.startDate}</span> (Reason: "{lr.reason}") has been{' '}
+                    <span className="font-bold underline">
+                      {lr.status === 'Approved' ? 'ACCEPTED' : 'CANCELLED'}
+                    </span>{' '}
+                    by Admin <span className="font-semibold">{lr.reviewedBy || 'Admin'}</span>
+                    {lr.reviewedAt ? ` on ${lr.reviewedAt}` : ''}.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setDismissedNotifs((prev) => [...prev, lr.id])}
+                className="text-xs font-semibold px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-600 hover:text-slate-900 shadow-2xs cursor-pointer shrink-0"
+              >
+                Dismiss
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Profile Header */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
