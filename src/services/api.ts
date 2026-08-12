@@ -653,6 +653,7 @@ export const api = {
       const emp = allEmployees.find((e) => e.id === empId || e.employeeId === empId);
       const recordId = `${date}_${empId}`;
 
+      const timeVal = (data as any).checkInTime || ((data.status === 'Present' || data.status === 'Late') ? '09:00 AM' : undefined);
       const newRecord: AttendanceRecord = {
         id: recordId,
         date,
@@ -660,7 +661,8 @@ export const api = {
         employeeName: emp?.name || 'Staff Member',
         department: emp?.department || 'Engineering',
         status: data.status,
-        checkIn: data.status === 'Present' || data.status === 'Late' ? '09:00 AM' : undefined,
+        checkIn: timeVal,
+        checkInTime: timeVal,
         checkOut: data.status === 'Present' ? '05:30 PM' : undefined,
         notes: data.notes || '',
         verifiedBy: 'System Admin',

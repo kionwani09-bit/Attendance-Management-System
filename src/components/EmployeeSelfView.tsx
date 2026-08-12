@@ -6,8 +6,10 @@ import {
   Clock,
   XCircle,
   FileText,
+  Calendar,
+  Sparkles,
 } from 'lucide-react';
-import { AttendanceRecord, User, Employee, LeaveRequest, EmployeeType } from '../types';
+import { AttendanceRecord, User, Employee, LeaveRequest, EmployeeType, AttendanceStatus } from '../types';
 
 interface EmployeeSelfViewProps {
   currentUser: User;
@@ -26,6 +28,13 @@ interface EmployeeSelfViewProps {
     phone?: string;
     avatar?: string;
   }) => void;
+  onClockIn?: (
+    date: string,
+    recordsMap: Record<
+      string,
+      { status: AttendanceStatus; notes?: string; checkInTime?: string }
+    >
+  ) => Promise<void>;
 }
 
 export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
@@ -34,6 +43,7 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
   employees,
   leaveRequests = [],
   onRequestLeave,
+  onClockIn,
 }) => {
   const [leaveDate, setLeaveDate] = useState(
     new Date().toISOString().split('T')[0]
@@ -42,9 +52,39 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  // Self Clock-In State
+  const [clockDate, setClockDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [clockTime, setClockTime] = useState(() =>
+    new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+  );
+  const [clockStatus, setClockStatus] = useState<AttendanceStatus>('Present');
+  const [isClockingIn, setIsClockingIn] = useState(false);
+  const [clockSuccessMessage, setClockSuccessMessage] = useState('');
+
   // Link employee ID
   const empId = currentUser.employeeId || 'E001';
   const myEmployee = employees.find((e) => e.id === empId) || employees[0];
+
+  const handleSelfClockIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onClockIn) return;
+    setIsClockingIn(true);
+    try {
+      await onClockIn(clockDate, {
+        [empId]: {
+          status: clockStatus,
+          checkInTime: clockTime,
+          notes: `Self clock-in recorded at ${clockTime}`,
+        },
+      });
+      setClockSuccessMessage(`Attendance saved for ${clockDate} at ${clockTime}!`);
+      setTimeout(() => setClockSuccessMessage(''), 4000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsClockingIn(false);
+    }
+  };
 
   // Filter records for this user
   const myRecords = attendanceRecords.filter(
@@ -190,6 +230,97 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
         >
           <CalendarCheck className="w-4 h-4" /> Request Leave
         </button>
+      </div>
+
+      {/* Self-Service Clock-In & Attendance Control Card */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-5 rounded-xl border border-indigo-800 shadow-md flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
+        <div className="space-y-1 max-w-sm">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 bg-indigo-500/20 rounded-lg text-indigo-300">
+              <Clock className="w-5 h-5" />
+            </span>
+            <h3 className="text-base font-bold text-white">Attendance Clock-In</h3>
+          </div>
+          <p className="text-xs text-indigo-200">
+            Set the exact date from the calendar and the exact clock time to record your attendance for today or another day.
+          </p>
+          {clockSuccessMessage && (
+            <div className="text-xs font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-3 py-1 rounded-md flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4" /> {clockSuccessMessage}
+            </div>
+          )}
+        </div>
+
+        <form onSubmit={handleSelfClockIn} className="flex flex-wrap items-end gap-3 w-full xl:w-auto">
+          {/* Date Picker */}
+          <div className="flex flex-col">
+            <label className="text-[10px] font-bold uppercase text-indigo-300 mb-1 flex items-center gap-1">
+              <Calendar className="w-3 h-3 text-indigo-400" /> Calendar Date
+            </label>
+            <input
+              type="date"
+              required
+              value={clockDate}
+              onChange={(e) => setClockDate(e.target.value)}
+              className="bg-slate-800/90 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs font-mono font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+            />
+          </div>
+
+          {/* Time Clock Input */}
+          <div className="flex flex-col">
+            <label className="text-[10px] font-bold uppercase text-indigo-300 mb-1 flex items-center gap-1">
+              <Clock className="w-3 h-3 text-indigo-400" /> Clock Time
+            </label>
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                required
+                value={clockTime}
+                onChange={(e) => setClockTime(e.target.value)}
+                placeholder="e.g. 09:00 AM"
+                className="bg-slate-800/90 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs font-mono font-bold w-28 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const now = new Date();
+                  setClockTime(
+                    now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+                  );
+                }}
+                className="px-2 py-2 bg-indigo-800 hover:bg-indigo-700 text-indigo-100 rounded-lg text-[10px] font-bold transition-colors cursor-pointer shrink-0"
+                title="Set to exact current local time"
+              >
+                Live Time
+              </button>
+            </div>
+          </div>
+
+          {/* Status Selection */}
+          <div className="flex flex-col">
+            <label className="text-[10px] font-bold uppercase text-indigo-300 mb-1">Status</label>
+            <select
+              value={clockStatus}
+              onChange={(e) => setClockStatus(e.target.value as AttendanceStatus)}
+              className="bg-slate-800/90 border border-slate-700 text-white rounded-lg px-3 py-2 text-xs font-bold focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer"
+            >
+              <option value="Present">Present</option>
+              <option value="Late">Late</option>
+              <option value="Leave">Leave</option>
+              <option value="Absent">Absent</option>
+            </select>
+          </div>
+
+          {/* Clock In Action */}
+          <button
+            type="submit"
+            disabled={isClockingIn}
+            className="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5 shrink-0"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            {isClockingIn ? 'Saving...' : 'Clock In Now'}
+          </button>
+        </form>
       </div>
 
       {/* Personal Attendance Stats */}

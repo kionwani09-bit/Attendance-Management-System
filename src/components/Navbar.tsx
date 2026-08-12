@@ -1,28 +1,48 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   UserCheck,
   LogOut,
-  Shield,
-  GraduationCap,
-  User,
-  ChevronDown,
+  Calendar,
+  Clock,
 } from 'lucide-react';
-import { User as UserType, Role } from '../types';
+import { User as UserType } from '../types';
 
 interface NavbarProps {
   currentUser: UserType | null;
   onLogout: () => void;
-  selectedDate?: string;
+  selectedDate: string;
+  setSelectedDate: (date: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   onLogout,
+  selectedDate,
+  setSelectedDate,
 }) => {
+  const [liveTime, setLiveTime] = useState('');
+
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      setLiveTime(
+        now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+        })
+      );
+    };
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <header className="h-16 bg-white border-b border-slate-200 text-slate-900 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 shadow-xs">
+    <header className="h-16 bg-white border-b border-slate-200 text-slate-900 sticky top-0 z-30 flex items-center justify-between px-4 sm:px-8 shadow-xs gap-4">
       {/* Brand & Title */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 shrink-0">
         <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
           <UserCheck className="w-5 h-5 text-white" />
         </div>
@@ -35,8 +55,29 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
+      {/* Live Calendar Date & Clock Bar */}
+      <div className="hidden lg:flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shadow-2xs">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+          <Calendar className="w-4 h-4 text-indigo-600 shrink-0" />
+          <span className="text-[11px] font-bold uppercase text-slate-500">Date:</span>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => e.target.value && setSelectedDate(e.target.value)}
+            className="bg-white border border-slate-200 rounded-md px-2 py-0.5 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+          />
+        </div>
+
+        <div className="h-4 w-px bg-slate-200"></div>
+
+        <div className="flex items-center gap-1.5 text-xs font-mono font-bold text-indigo-700">
+          <Clock className="w-4 h-4 text-indigo-600 animate-pulse shrink-0" />
+          <span>{liveTime || '00:00:00 AM'}</span>
+        </div>
+      </div>
+
       {/* User Profile & Logout */}
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 shrink-0">
         {currentUser && (
           <div className="flex items-center gap-2.5">
             <img

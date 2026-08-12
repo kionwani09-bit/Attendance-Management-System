@@ -93,6 +93,7 @@ export const MarkAttendanceView: React.FC<MarkAttendanceViewProps> = ({
     empId: string,
     status: AttendanceStatus
   ) => {
+    const nowTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
     setPendingMarks((prev) => ({
       ...prev,
       [empId]: {
@@ -100,9 +101,9 @@ export const MarkAttendanceView: React.FC<MarkAttendanceViewProps> = ({
         status,
         checkInTime:
           status === 'Present' && (!prev[empId]?.checkInTime || prev[empId]?.checkInTime === '-')
-            ? '09:00 AM'
+            ? nowTime
             : status === 'Late' && (!prev[empId]?.checkInTime || prev[empId]?.checkInTime === '-')
-            ? '09:45 AM'
+            ? nowTime
             : prev[empId]?.checkInTime || '',
       },
     }));
@@ -181,16 +182,43 @@ export const MarkAttendanceView: React.FC<MarkAttendanceViewProps> = ({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Date selector */}
-            <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3.5 py-2 rounded-lg">
-              <Calendar className="w-4 h-4 text-indigo-600" />
-              <label className="text-xs font-medium text-slate-500">Date:</label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-transparent text-slate-900 text-xs font-bold focus:outline-none cursor-pointer"
-              />
+            {/* Date selector with quick shortcuts */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-2 bg-slate-100 border border-slate-200 px-3 py-2 rounded-lg">
+                <Calendar className="w-4 h-4 text-indigo-600" />
+                <label className="text-xs font-bold text-slate-600">Calendar Date:</label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="bg-transparent text-slate-900 text-xs font-bold focus:outline-none cursor-pointer"
+                />
+              </div>
+
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    selectedDate === new Date().toISOString().split('T')[0]
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const d = new Date();
+                    d.setDate(d.getDate() - 1);
+                    setSelectedDate(d.toISOString().split('T')[0]);
+                  }}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all cursor-pointer"
+                >
+                  Yesterday
+                </button>
+              </div>
             </div>
 
             {/* Save Button */}

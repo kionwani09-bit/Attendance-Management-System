@@ -217,6 +217,7 @@ export default function App() {
         currentUser={currentUser}
         onLogout={handleLogout}
         selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
       />
 
       <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto">
@@ -280,6 +281,7 @@ export default function App() {
               employees={employees}
               leaveRequests={leaveRequests}
               onRequestLeave={handleRequestLeave}
+              onClockIn={handleSaveAttendance}
             />
           )}
         </main>
