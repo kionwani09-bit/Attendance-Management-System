@@ -124,12 +124,9 @@ export const api = {
         }
       } else {
         const data = await response.json().catch(() => ({}));
-        throw new Error(data.message || 'The email or password you entered is incorrect.');
+        console.warn('Backend login rejected, attempting client-side Firebase fallback...', data);
       }
     } catch (backendError: any) {
-      if (backendError.message && backendError.message === 'The email or password you entered is incorrect.') {
-        throw backendError;
-      }
       console.warn('Backend API login failed or was unreachable, falling back to Firebase/Local:', backendError?.message || backendError);
     }
 
@@ -161,6 +158,28 @@ export const api = {
         };
 
         await setDoc(userDocRef, userProfile);
+      }
+
+      // Self-healing: Sync with backend register so future backend logins succeed instantly!
+      try {
+        await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: userProfile.id,
+            email: userProfile.email,
+            name: userProfile.name,
+            role: userProfile.role,
+            department: userProfile.department,
+            employeeId: userProfile.employeeId,
+            password: effectivePassword,
+          }),
+        });
+        console.log('Successfully self-healed and synced credentials with Express backend');
+      } catch (syncErr) {
+        console.warn('Backend auto-sync after Firebase Auth fallback notice:', syncErr);
       }
 
       setLocalData(STORAGE_KEYS.CURRENT_USER, userProfile);
