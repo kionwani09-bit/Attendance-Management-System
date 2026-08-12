@@ -26,33 +26,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'dashboard' as TabType,
       label: 'Dashboard Overview',
       icon: LayoutDashboard,
-      roles: ['Admin', 'Teacher/HR'],
+      roles: ['Admin'],
     },
     {
       id: 'mark' as TabType,
       label: 'Mark Attendance',
       icon: ClipboardCheck,
-      roles: ['Admin', 'Teacher/HR'],
+      roles: ['Admin'],
       badge: 'Daily',
     },
     {
       id: 'users' as TabType,
       label: 'Members Directory',
       icon: Users,
-      roles: ['Admin', 'Teacher/HR'],
+      roles: ['Admin'],
     },
     {
       id: 'reports' as TabType,
       label: 'Reports & Exports',
       icon: FileSpreadsheet,
-      roles: ['Admin', 'Teacher/HR'],
+      roles: ['Admin'],
       badge: 'Excel/PDF',
     },
     {
       id: 'my_attendance' as TabType,
       label: 'My Attendance & Leave',
       icon: UserCheck2,
-      roles: ['Student/Employee', 'Admin', 'Teacher/HR'],
+      roles: ['Student/Employee', 'Teacher/HR', 'Admin'],
     },
   ];
 
