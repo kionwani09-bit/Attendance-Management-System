@@ -104,7 +104,7 @@ export const api = {
   // Auth
   login: async (email: string, password?: string): Promise<{ token: string; user: User }> => {
     initLocalStorage();
-    const effectivePassword = password && password.length >= 6 ? password : 'password123';
+    const effectivePassword = password || '';
 
     try {
       // Query the backend Express server first to run real bcrypt hashing & security checks
@@ -122,12 +122,19 @@ export const api = {
           setLocalData(STORAGE_KEYS.CURRENT_USER, data.user);
           return { token: data.token, user: data.user };
         }
-      } else {
+      } else if (response.status === 400 || response.status === 401) {
+        // The server is active and explicitly rejected credentials (wrong email or wrong password)
         const data = await response.json().catch(() => ({}));
-        console.warn('Backend login rejected, attempting client-side Firebase fallback...', data);
+        throw new Error(data.message || 'The email or password you entered is incorrect.');
       }
     } catch (backendError: any) {
-      console.warn('Backend API login failed or was unreachable, falling back to Firebase/Local:', backendError?.message || backendError);
+      if (
+        backendError?.message === 'The email or password you entered is incorrect.' ||
+        backendError?.message?.includes('incorrect')
+      ) {
+        throw backendError;
+      }
+      console.warn('Backend API login unreachable, falling back to Firebase/Local:', backendError?.message || backendError);
     }
 
     try {
@@ -196,12 +203,12 @@ export const api = {
           const matchedDoc = querySnap.docs[0];
           const matchedData = matchedDoc.data();
           
-          // Verify password! If they registered with password, check it. For default seeded accounts, let them through or match default.
+          // Verify password! If they registered with password, check it.
           const storedPassword = matchedData.password || 'password123';
           if (storedPassword === effectivePassword) {
             const userProfile = { id: matchedDoc.id, ...matchedData } as User;
 
-            // Self-healing: since backend check failed, let's sync this back to backend Express DB!
+            // Self-healing: since backend check failed earlier, sync credentials to backend Express DB
             try {
               await fetch('/api/auth/register', {
                 method: 'POST',
@@ -235,11 +242,16 @@ export const api = {
       }
 
       // Check Local storage fallback
-      const users = getLocalData<User[]>(STORAGE_KEYS.USERS, []);
+      const users = getLocalData<(User & { password?: string })[]>(STORAGE_KEYS.USERS, []);
       const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
 
       if (!user) {
         throw new Error('Account not found for this email. Please click "Sign Up" below to create your account.');
+      }
+
+      const storedLocalPassword = user.password || 'password123';
+      if (storedLocalPassword !== effectivePassword) {
+        throw new Error('The email or password you entered is incorrect.');
       }
 
       setLocalData(STORAGE_KEYS.CURRENT_USER, user);
@@ -352,12 +364,13 @@ export const api = {
     }
 
     // 4. Save into local storage
-    const users = getLocalData<User[]>(STORAGE_KEYS.USERS, []);
+    const users = getLocalData<(User & { password?: string })[]>(STORAGE_KEYS.USERS, []);
+    const newUserWithPass = { ...newUser, password: effectivePassword };
     const existingIdx = users.findIndex((u) => u.email.toLowerCase() === userData.email.toLowerCase());
     if (existingIdx !== -1) {
-      users[existingIdx] = newUser;
+      users[existingIdx] = newUserWithPass;
     } else {
-      users.unshift(newUser);
+      users.unshift(newUserWithPass);
     }
     setLocalData(STORAGE_KEYS.USERS, users);
     setLocalData(STORAGE_KEYS.CURRENT_USER, newUser);
