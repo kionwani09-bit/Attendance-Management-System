@@ -281,7 +281,6 @@ export default function App() {
               employees={employees}
               leaveRequests={leaveRequests}
               onRequestLeave={handleRequestLeave}
-              onClockIn={handleSaveAttendance}
             />
           )}
         </main>
