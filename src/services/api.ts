@@ -692,17 +692,22 @@ export const api = {
     initLocalStorage();
     try {
       const snap = await withTimeout(getDocs(collection(db, 'leaveRequests')));
+      const lrsFromDb: LeaveRequest[] = [];
       if (!snap.empty) {
-        const lrs: LeaveRequest[] = [];
         snap.forEach((docSnap) => {
-          lrs.push({ id: docSnap.id, ...docSnap.data() } as LeaveRequest);
+          lrsFromDb.push({ id: docSnap.id, ...docSnap.data() } as LeaveRequest);
         });
-        setLocalData(STORAGE_KEYS.LEAVE_REQUESTS, lrs);
-        return lrs;
-      } else {
-        setLocalData(STORAGE_KEYS.LEAVE_REQUESTS, []);
-        return [];
       }
+      const localLrs = getLocalData<LeaveRequest[]>(STORAGE_KEYS.LEAVE_REQUESTS, []);
+      // Merge DB and Local (DB takes precedence by id)
+      const mergedMap = new Map<string, LeaveRequest>();
+      localLrs.forEach((lr) => mergedMap.set(lr.id, lr));
+      lrsFromDb.forEach((lr) => mergedMap.set(lr.id, lr));
+
+      const finalLrs = Array.from(mergedMap.values());
+
+      setLocalData(STORAGE_KEYS.LEAVE_REQUESTS, finalLrs);
+      return finalLrs;
     } catch (e) {
       console.warn('Firestore getLeaveRequests fallback:', e);
       return getLocalData<LeaveRequest[]>(STORAGE_KEYS.LEAVE_REQUESTS, []);

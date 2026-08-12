@@ -48,12 +48,17 @@ export const EmployeeSelfView: React.FC<EmployeeSelfViewProps> = ({
 
   // Filter records for this user
   const myRecords = attendanceRecords.filter(
-    (r) => r.employeeId === empId || r.employeeName.toLowerCase().includes(currentUser.name.toLowerCase())
+    (r) =>
+      r.employeeId === empId ||
+      (r.employeeName && currentUser.name && r.employeeName.toLowerCase().includes(currentUser.name.toLowerCase()))
   );
 
   // Filter leave requests for this user
   const myLeaveRequests = leaveRequests.filter(
-    (lr) => lr.employeeId === empId || lr.employeeName.toLowerCase().includes(currentUser.name.toLowerCase())
+    (lr) =>
+      lr.employeeId === empId ||
+      (lr.email && currentUser.email && lr.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+      (lr.employeeName && currentUser.name && lr.employeeName.toLowerCase().includes(currentUser.name.toLowerCase()))
   );
 
   // Find latest reviewed leave requests for notification alerts
