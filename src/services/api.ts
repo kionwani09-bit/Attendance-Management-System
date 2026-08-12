@@ -240,6 +240,33 @@ export const api = {
       createdAt: new Date().toISOString(),
     };
 
+    // Notify Express backend to register the user so that login works seamlessly
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: newUser.id,
+          email: newUser.email,
+          name: newUser.name,
+          role: newUser.role,
+          department: newUser.department,
+          employeeId: newUser.employeeId,
+          password: effectivePassword,
+        }),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.warn('Backend registration API returned non-OK status:', errorData);
+      } else {
+        console.log('Successfully registered user with backend Express server');
+      }
+    } catch (backendRegError) {
+      console.warn('Could not register with backend Express server:', backendRegError);
+    }
+
     // 2. Save user profile into Firestore database (`users` collection)
     try {
       await setDoc(doc(db, 'users', uid), newUser);

@@ -143,7 +143,7 @@ async function startServer() {
 
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const { email, name, role, department, employeeId, password } = req.body;
+      const { email, name, role, department, employeeId, password, id } = req.body;
 
       if (!email || !name || !role) {
         return res.status(400).json({ error: 'Email, name, and role are required' });
@@ -157,7 +157,7 @@ async function startServer() {
       }
 
       const newUser: User = {
-        id: `u_${Date.now()}`,
+        id: id || `u_${Date.now()}`,
         email: cleanEmail,
         name,
         role: role || 'Student/Employee',
