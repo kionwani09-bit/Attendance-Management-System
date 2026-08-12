@@ -3,6 +3,10 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import bcrypt from 'bcrypt';
+import { readFileSync } from 'fs';
+import { initializeApp } from 'firebase/app';
+import { getFirestore, doc, getDoc, setDoc, query, where, getDocs, collection, deleteDoc } from 'firebase/firestore';
+
 import {
   INITIAL_USERS,
   INITIAL_EMPLOYEES,
@@ -19,9 +23,6 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// In-memory user passwords map (stores email -> bcrypt hash)
-const userPasswords = new Map<string, string>();
 
 // Seed default users in backend for robust demo verification
 const DEFAULT_USERS: User[] = [
@@ -63,15 +64,152 @@ const DEFAULT_USERS: User[] = [
   },
 ];
 
-let users: User[] = [...DEFAULT_USERS];
+// In-memory fallback
+let inMemoryUsers: User[] = [...DEFAULT_USERS];
+const inMemoryPasswords = new Map<string, string>();
+DEFAULT_USERS.forEach((u) => {
+  inMemoryPasswords.set(u.email.toLowerCase(), bcrypt.hashSync('password123', 10));
+});
+
 let employees: Employee[] = [...INITIAL_EMPLOYEES];
 let attendance: AttendanceRecord[] = [...INITIAL_ATTENDANCE];
 let reports: SavedReport[] = [...INITIAL_REPORTS];
 
-// Seed password hashes on startup
-DEFAULT_USERS.forEach((u) => {
-  userPasswords.set(u.email.toLowerCase(), bcrypt.hashSync('password123', 10));
-});
+// Initialize Firebase Firestore
+let firestoreDb: any = null;
+try {
+  const firebaseConfigJson = JSON.parse(
+    readFileSync(path.join(process.cwd(), 'firebase-applet-config.json'), 'utf-8')
+  );
+  const config = {
+    apiKey: process.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey,
+    authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId,
+    storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
+    messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,
+    appId: process.env.VITE_FIREBASE_APP_ID || firebaseConfigJson.appId,
+  };
+  const firebaseApp = initializeApp(config);
+  firestoreDb = getFirestore(firebaseApp);
+  console.log('Firebase initialized successfully in Express backend');
+} catch (fbErr) {
+  console.warn('Backend Firebase initialization notice (using in-memory fallback):', fbErr);
+}
+
+// Database Helpers for persistent operation
+async function findUserByEmail(email: string): Promise<User | null> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (firestoreDb) {
+    try {
+      const q = query(collection(firestoreDb, 'users'), where('email', '==', cleanEmail));
+      const querySnap = await getDocs(q);
+      if (!querySnap.empty) {
+        const docSnap = querySnap.docs[0];
+        return { id: docSnap.id, ...docSnap.data() } as User;
+      }
+    } catch (err) {
+      console.warn('Firestore user search error, using in-memory list:', err);
+    }
+  }
+  return inMemoryUsers.find((u) => u.email.toLowerCase() === cleanEmail) || null;
+}
+
+async function getStoredHash(email: string): Promise<string | null> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (firestoreDb) {
+    try {
+      const docRef = doc(firestoreDb, 'passwords', cleanEmail);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data().hash || null;
+      }
+    } catch (err) {
+      console.warn('Firestore password fetch error, using in-memory map:', err);
+    }
+  }
+  return inMemoryPasswords.get(cleanEmail) || null;
+}
+
+async function saveUserAndHash(user: User, passwordHash: string): Promise<void> {
+  const cleanEmail = user.email.trim().toLowerCase();
+  
+  // Always update memory
+  if (!inMemoryUsers.some((u) => u.id === user.id || u.email.toLowerCase() === cleanEmail)) {
+    inMemoryUsers.push(user);
+  }
+  inMemoryPasswords.set(cleanEmail, passwordHash);
+
+  // Update Firestore if available
+  if (firestoreDb) {
+    try {
+      await setDoc(doc(firestoreDb, 'users', user.id), user);
+      await setDoc(doc(firestoreDb, 'passwords', cleanEmail), { hash: passwordHash });
+      console.log('Successfully persisted user and password hash in Firestore collection');
+    } catch (err) {
+      console.error('Failed to write credentials to Firestore collections:', err);
+    }
+  }
+}
+
+async function getAllUsers(): Promise<User[]> {
+  if (firestoreDb) {
+    try {
+      const querySnap = await getDocs(collection(firestoreDb, 'users'));
+      if (!querySnap.empty) {
+        return querySnap.docs.map((d) => ({ id: d.id, ...d.data() } as User));
+      }
+    } catch (err) {
+      console.warn('Firestore fetch all users error, falling back to memory:', err);
+    }
+  }
+  return inMemoryUsers;
+}
+
+async function removeUser(id: string): Promise<void> {
+  const user = inMemoryUsers.find((u) => u.id === id);
+  if (user) {
+    inMemoryPasswords.delete(user.email.toLowerCase());
+  }
+  inMemoryUsers = inMemoryUsers.filter((u) => u.id !== id);
+
+  if (firestoreDb) {
+    try {
+      await deleteDoc(doc(firestoreDb, 'users', id));
+      if (user) {
+        await deleteDoc(doc(firestoreDb, 'passwords', user.email.toLowerCase()));
+      }
+    } catch (err) {
+      console.error('Firestore delete error:', err);
+    }
+  }
+}
+
+// Seed defaults into database if empty
+async function seedDefaultDb() {
+  if (firestoreDb) {
+    try {
+      for (const u of DEFAULT_USERS) {
+        const userDocRef = doc(firestoreDb, 'users', u.id);
+        const userSnap = await getDoc(userDocRef);
+        if (!userSnap.exists()) {
+          await setDoc(userDocRef, u);
+          console.log(`Seeded user ${u.email} into Firestore`);
+        }
+        
+        const passDocRef = doc(firestoreDb, 'passwords', u.email.toLowerCase());
+        const passSnap = await getDoc(passDocRef);
+        if (!passSnap.exists()) {
+          const hash = bcrypt.hashSync('password123', 10);
+          await setDoc(passDocRef, { hash });
+          console.log(`Seeded password hash for ${u.email} into Firestore`);
+        }
+      }
+    } catch (err) {
+      console.warn('Database seeding notice:', err);
+    }
+  }
+}
+seedDefaultDb();
 
 async function startServer() {
   const app = express();
@@ -100,11 +238,11 @@ async function startServer() {
       const cleanEmail = email.trim().toLowerCase();
 
       // 2. Database Check
-      const user = users.find((u) => u.email.toLowerCase() === cleanEmail);
+      const user = await findUserByEmail(cleanEmail);
 
       // Security: Constant-time hash fallback to prevent response timing leakage when user doesn't exist
       const DUMMY_HASH = '$2b$10$e7I3291.6888463836182.dummyhashfortimingmitigation';
-      const passwordHashToCompare = user ? (userPasswords.get(cleanEmail) || DUMMY_HASH) : DUMMY_HASH;
+      const passwordHashToCompare = user ? ((await getStoredHash(cleanEmail)) || DUMMY_HASH) : DUMMY_HASH;
 
       // 3. Password Verification (bcrypt comparison)
       const isPasswordValid = await bcrypt.compare(password, passwordHashToCompare);
@@ -151,7 +289,7 @@ async function startServer() {
 
       const cleanEmail = email.trim().toLowerCase();
 
-      const existing = users.find((u) => u.email.toLowerCase() === cleanEmail);
+      const existing = await findUserByEmail(cleanEmail);
       if (existing) {
         return res.status(400).json({ error: 'An account with this email already exists' });
       }
@@ -170,9 +308,8 @@ async function startServer() {
       // Hash password using bcrypt and store
       const plainPassword = password || 'password123';
       const hashedPassword = await bcrypt.hash(plainPassword, 10);
-      userPasswords.set(cleanEmail, hashedPassword);
+      await saveUserAndHash(newUser, hashedPassword);
 
-      users.push(newUser);
       const token = `jwt_token_${newUser.id}_${Date.now()}`;
       return res.status(201).json({ token, user: newUser });
     } catch (error) {
@@ -182,13 +319,14 @@ async function startServer() {
   });
 
   // User Management
-  app.get('/api/users', (req, res) => {
-    res.json(users);
+  app.get('/api/users', async (req, res) => {
+    const currentUsers = await getAllUsers();
+    res.json(currentUsers);
   });
 
-  app.delete('/api/users/:id', (req, res) => {
+  app.delete('/api/users/:id', async (req, res) => {
     const { id } = req.params;
-    users = users.filter((u) => u.id !== id);
+    await removeUser(id);
     res.json({ success: true, message: 'User deleted successfully' });
   });
 
